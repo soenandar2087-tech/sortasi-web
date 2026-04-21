@@ -20,8 +20,6 @@
         
         #camera-container { display: none; }
         .user-info-bar { background: #e8f0fe; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; text-align: left; color: #1967d2; line-height: 1.4; border: 1px solid #c2d7fa; }
-        
-        .btn-switch { width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; margin-bottom: 10px; font-weight: bold; cursor: pointer; }
         .btn-logout { width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
 
         #webcam-container { width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 3px solid #ddd; }
@@ -76,9 +74,8 @@
     <div id="camera-container" class="fade-in">
         <div class="user-info-bar" id="user-info-bar"></div>
         <button class="btn-logout" onclick="logout()">⬅️ Ganti Data</button>
-        <button id="btn-switch" class="btn-switch" onclick="switchCamera()">🔄 Ganti Kamera</button>
 
-        <div id="webcam-container"><span style="color: white;">Mengaktifkan Kamera...</span></div>
+        <div id="webcam-container"><span style="color: white;">Mengaktifkan Kamera Belakang...</span></div>
         <div id="label-container" class="label-box label-default">Memuat AI...</div>
 
         <div id="preview-container">
@@ -95,65 +92,47 @@
     let model, webcam, maxPredictions, previewCtx;
     let currentLabel = "", currentProb = 0;
     let dataMandor = "", dataKaryawan = "", dataBlok = "";
-    let currentFacingMode = "environment"; 
 
-    // FUNGSI UTAMA: MASUK & LANGSUNG AKTIFKAN AI
     async function masukDanMulai() {
         dataMandor = document.getElementById("select-mandor").value;
         dataKaryawan = document.getElementById("select-karyawan").value;
         dataBlok = document.getElementById("select-blok").value;
 
         if(!dataMandor || !dataKaryawan || !dataBlok) {
-            return alert("Harap isi semua data sebelum masuk!");
+            return alert("Harap isi semua data!");
         }
 
-        // Tampilkan Loading di tombol
         const btn = document.getElementById("btn-submit");
         btn.disabled = true;
         btn.innerHTML = "⏳ Menyiapkan AI...";
 
-        // Ganti Tampilan
         document.getElementById("user-info-bar").innerHTML = `👷 <b>Mandor:</b> ${dataMandor}<br>🧑‍🌾 <b>Karyawan:</b> ${dataKaryawan}<br>📍 <b>Lokasi:</b> ${dataBlok}`;
         document.getElementById("form-container").style.display = "none";
         document.getElementById("camera-container").style.display = "block";
 
-        // Jalankan AI & Kamera Otomatis
         await initAI();
     }
 
     async function initAI() {
         try {
-            // Load Model
             model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
             maxPredictions = model.getTotalClasses();
 
-            // Setup Kamera
-            await setupWebcam();
+            // Set otomatis ke kamera belakang (environment) dan tanpa flip
+            webcam = new tmImage.Webcam(300, 300, false); 
+            await webcam.setup({ facingMode: "environment" });
+            await webcam.play();
 
-            // Tampilkan Tombol Capture
+            document.getElementById("webcam-container").innerHTML = "";
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
             document.getElementById("capture-btn").style.display = "block";
+            
             previewCtx = document.getElementById("preview-canvas").getContext("2d");
             window.requestAnimationFrame(loop);
         } catch (e) {
-            alert("Gagal mengaktifkan kamera otomatis. Berikan izin akses kamera.");
+            alert("Gagal mengaktifkan kamera belakang. Pastikan izin diberikan.");
             logout();
         }
-    }
-
-    async function setupWebcam() {
-        if (webcam) await webcam.stop();
-        const flip = (currentFacingMode === "user");
-        webcam = new tmImage.Webcam(300, 300, flip);
-        await webcam.setup({ facingMode: currentFacingMode });
-        await webcam.play();
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-    }
-
-    async function switchCamera() {
-        document.getElementById("label-container").innerHTML = "🔄 Mengganti Lensa...";
-        currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-        await setupWebcam();
     }
 
     function logout() { location.reload(); }
@@ -205,7 +184,7 @@
 
     function saveImage() {
         const link = document.createElement('a');
-        link.download = `Sortasi_${dataBlok}_${(currentProb*100).toFixed(0)}%.png`;
+        link.download = `Sortasi_${dataBlok}_${dataKaryawan}_${(currentProb*100).toFixed(0)}%.png`;
         link.href = document.getElementById("preview-canvas").toDataURL();
         link.click();
     }
