@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <style>
-        /* Gaya dasar tetap sama agar tampilan konsisten */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; min-height: 100vh; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
@@ -22,17 +21,16 @@
         #camera-container { display: none; }
         .user-info-bar { background: #e8f0fe; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; text-align: left; color: #1967d2; line-height: 1.4; border: 1px solid #c2d7fa; }
         
-        .btn-switch { width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; margin-bottom: 10px; font-weight: bold; cursor: pointer; display: none; }
+        .btn-switch { width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; margin-bottom: 10px; font-weight: bold; cursor: pointer; }
         .btn-logout { width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
 
         #webcam-container { width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 3px solid #ddd; }
         #preview-container { display: none; width: 300px; height: 300px; margin: 15px auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         canvas { width: 100% !important; }
 
-        .action-btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none; }
-        .btn-start { background: #1a73e8; color: white; display: block !important; }
-        .btn-capture { background: #28a745; color: white; }
-        .btn-save { background: #17a2b8; color: white; }
+        .action-btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-capture { background: #28a745; color: white; display: none; }
+        .btn-save { background: #17a2b8; color: white; display: none; }
 
         .label-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 1.2em; font-weight: bold; transition: 0.3s; }
         .label-default { background: #e8f0fe; color: #1967d2; }
@@ -54,7 +52,6 @@
                 <option value="">-- Pilih Mandor --</option>
                 <option value="Sudirman">Sudirman</option>
                 <option value="Bambang">Bambang</option>
-                <option value="Rahmat">Rahmat</option>
             </select>
         </div>
         <div class="form-group">
@@ -63,7 +60,6 @@
                 <option value="">-- Pilih Karyawan --</option>
                 <option value="Andi">Andi</option>
                 <option value="Budi">Budi</option>
-                <option value="Cahyo">Cahyo</option>
             </select>
         </div>
         <div class="form-group">
@@ -74,27 +70,23 @@
                 <option value="Blok B1">Blok B1</option>
             </select>
         </div>
-        <button class="btn-masuk" onclick="masuk()">🚀 MASUK KE KAMERA</button>
+        <button class="btn-masuk" id="btn-submit" onclick="masukDanMulai()">🚀 MASUK KE KAMERA</button>
     </div>
 
     <div id="camera-container" class="fade-in">
         <div class="user-info-bar" id="user-info-bar"></div>
         <button class="btn-logout" onclick="logout()">⬅️ Ganti Data</button>
-        <button id="btn-switch" class="btn-switch" onclick="switchCamera()">🔄 Ganti Kamera (Depan/Belakang)</button>
-        <button class="action-btn btn-start" id="btn-start" onclick="init()">📷 AKTIFKAN KAMERA</button>
+        <button id="btn-switch" class="btn-switch" onclick="switchCamera()">🔄 Ganti Kamera</button>
 
-        <div id="webcam-container">
-            <span style="color: white; font-size: 0.9em;">Kamera Siap...</span>
-        </div>
-
-        <div id="label-container" class="label-box label-default">Menunggu Deteksi...</div>
+        <div id="webcam-container"><span style="color: white;">Mengaktifkan Kamera...</span></div>
+        <div id="label-container" class="label-box label-default">Memuat AI...</div>
 
         <div id="preview-container">
             <canvas id="preview-canvas" width="300" height="300"></canvas>
         </div>
 
-        <button class="action-btn btn-capture" id="capture-btn" onclick="captureImage()">📸 Ambil Gambar & Simpan Info</button>
-        <button class="action-btn btn-save" id="save-btn" onclick="saveImage()">💾 Simpan ke Galeri HP</button>
+        <button class="action-btn btn-capture" id="capture-btn" onclick="captureImage()">📸 Ambil Gambar</button>
+        <button class="action-btn btn-save" id="save-btn" onclick="saveImage()">💾 Simpan Foto</button>
     </div>
 </div>
 
@@ -105,45 +97,46 @@
     let dataMandor = "", dataKaryawan = "", dataBlok = "";
     let currentFacingMode = "environment"; 
 
-    function masuk() {
+    // FUNGSI UTAMA: MASUK & LANGSUNG AKTIFKAN AI
+    async function masukDanMulai() {
         dataMandor = document.getElementById("select-mandor").value;
         dataKaryawan = document.getElementById("select-karyawan").value;
         dataBlok = document.getElementById("select-blok").value;
 
         if(!dataMandor || !dataKaryawan || !dataBlok) {
-            alert("Harap isi semua data Mandor, Karyawan, dan Blok!");
-            return;
+            return alert("Harap isi semua data sebelum masuk!");
         }
 
-        document.getElementById("user-info-bar").innerHTML = 
-            `👷 <b>Mandor:</b> ${dataMandor}<br>` +
-            `🧑‍🌾 <b>Karyawan:</b> ${dataKaryawan}<br>` +
-            `📍 <b>Lokasi:</b> ${dataBlok}`;
+        // Tampilkan Loading di tombol
+        const btn = document.getElementById("btn-submit");
+        btn.disabled = true;
+        btn.innerHTML = "⏳ Menyiapkan AI...";
 
+        // Ganti Tampilan
+        document.getElementById("user-info-bar").innerHTML = `👷 <b>Mandor:</b> ${dataMandor}<br>🧑‍🌾 <b>Karyawan:</b> ${dataKaryawan}<br>📍 <b>Lokasi:</b> ${dataBlok}`;
         document.getElementById("form-container").style.display = "none";
         document.getElementById("camera-container").style.display = "block";
+
+        // Jalankan AI & Kamera Otomatis
+        await initAI();
     }
 
-    function logout() {
-        if (webcam) webcam.stop();
-        location.reload();
-    }
-
-    async function init() {
+    async function initAI() {
         try {
-            document.getElementById("label-container").innerHTML = "⏳ Memuat AI...";
+            // Load Model
             model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
             maxPredictions = model.getTotalClasses();
 
+            // Setup Kamera
             await setupWebcam();
 
-            document.getElementById("btn-start").style.display = "none";
-            document.getElementById("btn-switch").style.display = "block";
+            // Tampilkan Tombol Capture
             document.getElementById("capture-btn").style.display = "block";
             previewCtx = document.getElementById("preview-canvas").getContext("2d");
             window.requestAnimationFrame(loop);
         } catch (e) {
-            alert("Gagal memuat kamera/model. Pastikan izin kamera diberikan.");
+            alert("Gagal mengaktifkan kamera otomatis. Berikan izin akses kamera.");
+            logout();
         }
     }
 
@@ -158,9 +151,12 @@
     }
 
     async function switchCamera() {
+        document.getElementById("label-container").innerHTML = "🔄 Mengganti Lensa...";
         currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
         await setupWebcam();
     }
+
+    function logout() { location.reload(); }
 
     async function loop() {
         webcam.update();
@@ -180,55 +176,39 @@
         }
         currentLabel = bestLabel;
         currentProb = highestProb;
-        
         const lb = document.getElementById("label-container");
-        lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(0)}%)`;
+        lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(1)}%)`;
         lb.className = "label-box " + (bestLabel.toLowerCase().includes("mentah") ? "label-mentah" : (bestLabel.toLowerCase().includes("matang") ? "label-matang" : "label-default"));
     }
 
-    // ============ FUNGSI CAPTURE DENGAN KETERANGAN LENGKAP ============
     function captureImage() {
-        // 1. Gambar objek dari kamera
         previewCtx.drawImage(webcam.canvas, 0, 0, 300, 300);
-        
-        // 2. Tambahkan Overlay Hitam Transparan di bawah untuk teks
-        previewCtx.fillStyle = "rgba(0, 0, 0, 0.7)";
-        previewCtx.fillRect(0, 220, 300, 80); // Kotak informasi di bagian bawah
+        previewCtx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        previewCtx.fillRect(0, 215, 300, 85); 
 
-        // 3. Tambahkan Teks Keterangan
         previewCtx.fillStyle = "white";
         previewCtx.textAlign = "left";
+        const akurasi = (currentProb * 100).toFixed(1) + "%";
         
-        // Baris 1: Hasil Deteksi (Ukuran besar)
         previewCtx.font = "bold 16px Arial";
-        previewCtx.fillText("Hasil: " + currentLabel.toUpperCase(), 10, 240);
-        
-        // Baris 2: Mandor
+        previewCtx.fillText(`Hasil: ${currentLabel.toUpperCase()} (${akurasi})`, 10, 235);
         previewCtx.font = "12px Arial";
-        previewCtx.fillText("Mandor: " + dataMandor, 10, 260);
-        
-        // Baris 3: Karyawan
-        previewCtx.fillText("Karyawan: " + dataKaryawan, 10, 275);
-        
-        // Baris 4: Blok & Waktu
-        const tgl = new Date().toLocaleDateString('id-ID');
-        previewCtx.fillText(dataBlok + " | " + tgl, 10, 290);
+        previewCtx.fillText("Mandor: " + dataMandor, 10, 255);
+        previewCtx.fillText("Karyawan: " + dataKaryawan, 10, 272);
+        const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+        previewCtx.fillText(`${dataBlok} | ${tgl}`, 10, 289);
         
         document.getElementById("preview-container").style.display = "block";
         document.getElementById("save-btn").style.display = "block";
-        
-        // Scroll otomatis ke pratinjau agar user melihat hasilnya
         document.getElementById("preview-container").scrollIntoView({ behavior: 'smooth' });
     }
 
     function saveImage() {
         const link = document.createElement('a');
-        const tgl = new Date().getTime();
-        link.download = `Sortasi_${dataBlok}_${dataKaryawan}_${tgl}.png`;
+        link.download = `Sortasi_${dataBlok}_${(currentProb*100).toFixed(0)}%.png`;
         link.href = document.getElementById("preview-canvas").toDataURL();
         link.click();
     }
 </script>
-
 </body>
 </html>
