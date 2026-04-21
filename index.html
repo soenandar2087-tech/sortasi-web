@@ -9,80 +9,37 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; min-height: 100vh; }
-
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
-
-        /* ============ FORM LOGIN ============ */
+        
+        /* Form */
         #form-container h2 { color: #1a73e8; margin-bottom: 5px; }
-        #form-container p { color: #666; font-size: 0.85em; margin-bottom: 20px; }
-
         .form-group { text-align: left; margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; color: #333; margin-bottom: 6px; font-size: 0.95em; }
-        .form-group select,
-        .form-group input { 
-            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; 
-            font-size: 1em; background: #fafafa; transition: border 0.3s;
-        }
-        .form-group select:focus,
-        .form-group input:focus { border-color: #1a73e8; outline: none; background: white; }
-
-        .info-banner {
-            background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px;
-            margin-bottom: 15px; font-size: 0.85em; border: 1px solid #ffc107;
-        }
-
-        .btn-masuk { 
-            width: 100%; padding: 14px; background: #1a73e8; color: white; 
-            border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; 
-            cursor: pointer; transition: background 0.3s;
-        }
-        .btn-masuk:hover { background: #1557b0; }
-        .btn-masuk:disabled { background: #aaa; cursor: not-allowed; }
-
-        /* ============ KAMERA / DETEKSI ============ */
+        .form-group label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.95em; }
+        .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; }
+        
+        .btn-masuk { width: 100%; padding: 14px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; }
+        
+        /* Kamera */
         #camera-container { display: none; }
+        .user-info-bar { background: #e8f0fe; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; text-align: left; }
+        .btn-logout { width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
+        
+        /* Tombol Switch Kamera */
+        .btn-switch { width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; margin-bottom: 10px; font-weight: bold; cursor: pointer; display: none; }
 
-        .user-info-bar {
-            background: #e8f0fe; padding: 10px; border-radius: 8px; margin-bottom: 10px;
-            font-size: 0.85em; color: #1967d2; text-align: left; line-height: 1.6;
-        }
-        .user-info-bar span { font-weight: bold; }
+        #webcam-container { width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #preview-container { display: none; width: 300px; height: 300px; margin: 10px auto; border-radius: 10px; overflow: hidden; }
+        canvas { width: 100% !important; }
 
-        .btn-logout {
-            width: 100%; padding: 10px; background: #f44336; color: white;
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
-            margin-bottom: 10px; font-size: 0.9em;
-        }
-        .btn-logout:hover { background: #c62828; }
-
-        #webcam-container { 
-            width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; 
-            border-radius: 10px; overflow: hidden; display: flex; 
-            align-items: center; justify-content: center; 
-        }
-        #preview-container { 
-            display: none; width: 300px; height: 300px; background: #2c3e50; 
-            margin: 10px auto; border-radius: 10px; overflow: hidden; 
-        }
-        canvas { width: 100% !important; height: auto !important; }
-
-        button.action-btn { 
-            width: 100%; padding: 12px; margin: 5px 0; border: none; 
-            border-radius: 8px; cursor: pointer; font-weight: bold; display: none; 
-        }
+        .action-btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: none; }
         .btn-start { background: #1a73e8; color: white; display: block !important; }
         .btn-capture { background: #28a745; color: white; }
         .btn-save { background: #17a2b8; color: white; }
 
-        .label-box { 
-            padding: 15px; border-radius: 8px; margin-top: 10px; 
-            font-size: 1.2em; font-weight: bold; transition: all 0.3s ease; 
-        }
+        .label-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 1.2em; font-weight: bold; }
         .label-default { background: #e8f0fe; color: #1967d2; }
         .label-mentah { background: #fde8e8; color: #d32f2f; border: 2px solid #d32f2f; }
         .label-matang { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
-
-        /* Animasi */
         .fade-in { animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -90,73 +47,45 @@
 <body>
 
 <div class="card">
-
-    <!-- ============ FORM PILIHAN ============ -->
     <div id="form-container" class="fade-in">
         <h2>🌴 Sortasi Sawit</h2>
-        <p>Isi data berikut sebelum mulai deteksi</p>
-
-        <div class="info-banner">
-            ⚠️ Pastikan menggunakan <b>Live Server</b> agar kamera aktif.
-        </div>
-
         <div class="form-group">
             <label>👷 Mandor</label>
             <select id="select-mandor">
-                <option value="">-- Pilih Mandor --</option>
-                <option value="Mandor A - Sudirman">Sudirman</option>
-                <option value="Mandor B - Bambang">Bambang</option>
-                <option value="Mandor C - Rahmat">Rahmat</option>
-                <option value="Mandor D - Hendra">Hendra</option>
+                <option value="Sudirman">Sudirman</option>
+                <option value="Bambang">Bambang</option>
             </select>
         </div>
-
         <div class="form-group">
             <label>🧑‍🌾 Karyawan</label>
             <select id="select-karyawan">
-                <option value="">-- Pilih Karyawan --</option>
                 <option value="Andi">Andi</option>
                 <option value="Budi">Budi</option>
-                <option value="Cahyo">Cahyo</option>
-                <option value="Dedi">Dedi</option>
-                <option value="Eko">Eko</option>
-                <option value="Fajar">Fajar</option>
             </select>
         </div>
-
         <div class="form-group">
             <label>📍 Blok</label>
             <select id="select-blok">
-                <option value="">-- Pilih Blok --</option>
                 <option value="Blok A1">Blok A1</option>
-                <option value="Blok A2">Blok A2</option>
                 <option value="Blok B1">Blok B1</option>
-                <option value="Blok B2">Blok B2</option>
-                <option value="Blok C1">Blok C1</option>
-                <option value="Blok C2">Blok C2</option>
             </select>
         </div>
-
-        <button class="btn-masuk" id="btn-masuk" onclick="masuk()">🚀 MASUK & MULAI</button>
+        <button class="btn-masuk" onclick="masuk()">🚀 MASUK</button>
     </div>
 
-    <!-- ============ KAMERA & DETEKSI ============ -->
     <div id="camera-container" class="fade-in">
-        <h2>🌴 Sortasi Sawit</h2>
-
-        <div class="user-info-bar" id="user-info-bar">
-            <!-- Info mandor/karyawan/blok tampil di sini -->
-        </div>
-
-        <button class="btn-logout" onclick="logout()">⬅️ Ganti Data / Kembali</button>
-
-        <button class="action-btn btn-start" id="btn-start" onclick="init()">📷 MULAI KAMERA & AI</button>
+        <div class="user-info-bar" id="user-info-bar"></div>
+        <button class="btn-logout" onclick="logout()">⬅️ Kembali</button>
+        
+        <button id="btn-switch" class="btn-switch" onclick="switchCamera()">🔄 Ganti Kamera</button>
+        
+        <button class="action-btn btn-start" id="btn-start" onclick="init()">📷 AKTIFKAN KAMERA</button>
 
         <div id="webcam-container">
-            <span style="color: white; font-size: 0.9em;">Kamera akan muncul di sini</span>
+            <span style="color: white;">Kamera Belum Aktif</span>
         </div>
 
-        <div id="label-container" class="label-box label-default">Menunggu data...</div>
+        <div id="label-container" class="label-box label-default">Siap Deteksi</div>
 
         <div id="preview-container">
             <canvas id="preview-canvas" width="300" height="300"></canvas>
@@ -165,73 +94,29 @@
         <button class="action-btn btn-capture" id="capture-btn" onclick="captureImage()">📸 Ambil Gambar</button>
         <button class="action-btn btn-save" id="save-btn" onclick="saveImage()">💾 Simpan Gambar</button>
     </div>
-
 </div>
 
 <script>
     const MODEL_URL = "https://teachablemachine.withgoogle.com/models/ZkvJoTy22/";
-
     let model, webcam, labelContainer, maxPredictions, previewCtx;
-    let currentLabel = "";
-    let currentProb = 0;
+    let currentLabel = "", currentProb = 0;
+    let dataMandor = "", dataKaryawan = "", dataBlok = "";
+    
+    // Variabel untuk kontrol kamera
+    let currentFacingMode = "environment"; 
 
-    // Data form
-    let dataMandor = "";
-    let dataKaryawan = "";
-    let dataBlok = "";
-
-    // ============ FUNGSI FORM ============
     function masuk() {
         dataMandor = document.getElementById("select-mandor").value;
         dataKaryawan = document.getElementById("select-karyawan").value;
         dataBlok = document.getElementById("select-blok").value;
-
-        if (!dataMandor || !dataKaryawan || !dataBlok) {
-            alert("⚠️ Harap isi semua data: Mandor, Karyawan, dan Blok!");
-            return;
-        }
-
-        // Tampilkan info
-        document.getElementById("user-info-bar").innerHTML = 
-            `👷 <span>${dataMandor}</span><br>` +
-            `🧑‍🌾 <span>${dataKaryawan}</span><br>` +
-            `📍 <span>${dataBlok}</span>`;
-
-        // Sembunyikan form, tampilkan kamera
+        document.getElementById("user-info-bar").innerHTML = `👷 <b>${dataMandor}</b> | 📍 <b>${dataBlok}</b><br>🧑‍🌾 <b>${dataKaryawan}</b>`;
         document.getElementById("form-container").style.display = "none";
         document.getElementById("camera-container").style.display = "block";
-        document.getElementById("camera-container").classList.add("fade-in");
     }
 
     function logout() {
-        // Stop kamera jika aktif
-        if (webcam) {
-            webcam.stop();
-            webcam = null;
-        }
-
-        // Reset tampilan
-        document.getElementById("camera-container").style.display = "none";
-        document.getElementById("form-container").style.display = "block";
-        document.getElementById("form-container").classList.add("fade-in");
-
-        document.getElementById("webcam-container").innerHTML = 
-            '<span style="color: white; font-size: 0.9em;">Kamera akan muncul di sini</span>';
-        document.getElementById("label-container").innerHTML = "Menunggu data...";
-        document.getElementById("label-container").className = "label-box label-default";
-        document.getElementById("preview-container").style.display = "none";
-        document.getElementById("save-btn").style.display = "none";
-        document.getElementById("capture-btn").style.display = "none";
-        document.getElementById("btn-start").style.display = "block";
-    }
-
-    // ============ FUNGSI DETEKSI ============
-    function isMentah(label) {
-        return label.toLowerCase().includes("mentah");
-    }
-
-    function isMatang(label) {
-        return label.toLowerCase().includes("matang");
+        if (webcam) webcam.stop();
+        location.reload(); // Reset semua
     }
 
     async function init() {
@@ -239,31 +124,42 @@
         const metadataURL = MODEL_URL + "metadata.json";
 
         try {
-            document.getElementById("label-container").innerHTML = "⏳ Memuat Model...";
+            document.getElementById("label-container").innerHTML = "⏳ Memuat AI...";
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            const flip = false;
-            webcam = new tmImage.Webcam(300, 300, flip);
+            await setupWebcam();
 
-            await webcam.setup();
-            await webcam.play();
-
-            document.getElementById("webcam-container").innerHTML = "";
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
-
-            labelContainer = document.getElementById("label-container");
-
-            document.getElementById("capture-btn").style.display = "block";
             document.getElementById("btn-start").style.display = "none";
+            document.getElementById("btn-switch").style.display = "block";
+            document.getElementById("capture-btn").style.display = "block";
             previewCtx = document.getElementById("preview-canvas").getContext("2d");
-
             window.requestAnimationFrame(loop);
         } catch (e) {
-            console.error(e);
-            alert("Gagal memuat kamera. Pastikan Anda memberikan izin akses kamera.");
-            document.getElementById("label-container").innerHTML = "❌ Kamera Diblokir!";
+            alert("Error: " + e);
         }
+    }
+
+    async function setupWebcam() {
+        // Jika sudah ada webcam, stop dulu sebelum ganti
+        if (webcam) {
+            await webcam.stop();
+        }
+
+        const flip = (currentFacingMode === "user");
+        webcam = new tmImage.Webcam(300, 300, flip);
+        await webcam.setup({ facingMode: currentFacingMode });
+        await webcam.play();
+
+        document.getElementById("webcam-container").innerHTML = "";
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+    }
+
+    async function switchCamera() {
+        // Ganti antara 'user' (depan) dan 'environment' (belakang)
+        currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+        document.getElementById("label-container").innerHTML = "🔄 Mengganti Kamera...";
+        await setupWebcam();
     }
 
     async function loop() {
@@ -276,93 +172,37 @@
         const prediction = await model.predict(webcam.canvas);
         let bestLabel = "";
         let highestProb = 0;
-
         for (let i = 0; i < maxPredictions; i++) {
             if (prediction[i].probability > highestProb) {
                 highestProb = prediction[i].probability;
                 bestLabel = prediction[i].className;
             }
         }
-
         currentLabel = bestLabel;
         currentProb = highestProb;
-
-        const displayText = bestLabel + " (" + (highestProb * 100).toFixed(1) + "%)";
-        labelContainer.innerHTML = displayText;
-
-        labelContainer.className = "label-box";
-        if (isMentah(bestLabel)) {
-            labelContainer.classList.add("label-mentah");
-        } else if (isMatang(bestLabel)) {
-            labelContainer.classList.add("label-matang");
-        } else {
-            labelContainer.classList.add("label-default");
-        }
+        
+        const lb = document.getElementById("label-container");
+        lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(0)}%)`;
+        lb.className = "label-box " + (bestLabel.toLowerCase().includes("mentah") ? "label-mentah" : (bestLabel.toLowerCase().includes("matang") ? "label-matang" : "label-default"));
     }
 
     function captureImage() {
-        if (!webcam || !previewCtx) return;
-
         previewCtx.drawImage(webcam.canvas, 0, 0, 300, 300);
-
-        const now = new Date();
-        const dateStr = now.toLocaleString('id-ID', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', hour12: false
-        });
-
-        const resultStr = currentLabel + " - " + (currentProb * 100).toFixed(1) + "%";
-        const infoStr = dataKaryawan + " | " + dataBlok;
-
-        // === Tanggal (atas) ===
-        previewCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        previewCtx.fillRect(0, 0, 300, 30);
-        previewCtx.font = 'bold 14px Arial';
-        previewCtx.fillStyle = '#ffffff';
-        previewCtx.textBaseline = 'middle';
-        previewCtx.fillText('📅 ' + dateStr, 8, 15);
-
-        // === Info Karyawan & Blok (tengah atas) ===
-        previewCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        previewCtx.fillRect(0, 30, 300, 25);
-        previewCtx.font = 'bold 13px Arial';
-        previewCtx.fillStyle = '#ffeb3b';
-        previewCtx.fillText('🧑‍🌾 ' + infoStr, 8, 42);
-
-        // === Hasil deteksi (bawah) — warna sesuai label ===
-        if (isMentah(currentLabel)) {
-            previewCtx.fillStyle = 'rgba(211, 47, 47, 0.85)';
-        } else if (isMatang(currentLabel)) {
-            previewCtx.fillStyle = 'rgba(46, 125, 50, 0.85)';
-        } else {
-            previewCtx.fillStyle = 'rgba(26, 115, 232, 0.85)';
-        }
-        previewCtx.fillRect(0, 268, 300, 32);
-
-        previewCtx.font = 'bold 18px Arial';
-        previewCtx.fillStyle = '#ffffff';
-        previewCtx.textBaseline = 'middle';
-        previewCtx.fillText(resultStr, 8, 284);
-
+        // Watermark sederhana
+        previewCtx.fillStyle = "rgba(0,0,0,0.6)";
+        previewCtx.fillRect(0, 260, 300, 40);
+        previewCtx.fillStyle = "white";
+        previewCtx.font = "bold 15px Arial";
+        previewCtx.fillText(`${currentLabel} | ${dataBlok}`, 10, 285);
+        
         document.getElementById("preview-container").style.display = "block";
         document.getElementById("save-btn").style.display = "block";
     }
 
     function saveImage() {
-        const canvas = document.getElementById("preview-canvas");
-        const now = new Date();
-        const dateStr = now.toLocaleString('id-ID', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', hour12: false
-        });
-        const safeLabel = (currentLabel || "hasil").replace(/\s+/g, '_');
-        const safeKaryawan = dataKaryawan.replace(/\s+/g, '_');
-        const safeBlok = dataBlok.replace(/\s+/g, '_');
-        const filename = `${safeBlok}_${safeKaryawan}_${safeLabel}_${(currentProb*100).toFixed(0)}persen_${dateStr.replace(/[/:\s]/g, '-')}.png`;
-
         const link = document.createElement('a');
-        link.download = filename;
-        link.href = canvas.toDataURL('image/png');
+        link.download = `Hasil_${dataBlok}.png`;
+        link.href = document.getElementById("preview-canvas").toDataURL();
         link.click();
     }
 </script>
