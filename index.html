@@ -108,12 +108,40 @@
         const prediction = await model.predict(webcam.canvas);
         let bestLabel = "";
         let highestProb = 0;
+
         for (let i = 0; i < maxPredictions; i++) {
             if (prediction[i].probability > highestProb) {
                 highestProb = prediction[i].probability;
                 bestLabel = prediction[i].className;
             }
         }
+
+        const lb = document.getElementById("label-container");
+        
+        // --- LOGIKA BARU: AMBANG BATAS ---
+        // Jika probabilitas tertinggi di bawah 0.8 (80%), tampilkan "Cari Objek"
+        const THRESHOLD = 0.80; 
+
+        if (highestProb < THRESHOLD) {
+            currentLabel = "Cari Objek";
+            currentProb = highestProb;
+            lb.innerHTML = `🔍 Cari Objek...`;
+            lb.className = "label-box label-default"; // Kembali ke warna biru/netral
+        } else {
+            currentLabel = bestLabel;
+            currentProb = highestProb;
+            lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(1)}%)`;
+            
+            // Atur warna berdasarkan label
+            if (bestLabel.toLowerCase().includes("mentah")) {
+                lb.className = "label-box label-mentah";
+            } else if (bestLabel.toLowerCase().includes("matang")) {
+                lb.className = "label-box label-matang";
+            } else {
+                lb.className = "label-box label-default";
+            }
+        }
+    }
         currentLabel = bestLabel;
         currentProb = highestProb;
         const lb = document.getElementById("label-container");
