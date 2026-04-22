@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Detektor Buah</title>
+    <title>AI Detektor Buah Sawit</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <style>
@@ -26,8 +26,8 @@
         .btn-capture { background: #28a745; color: white; display: none; }
         .btn-save { background: #17a2b8; color: white; display: none; }
 
-        .label-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 1.2em; font-weight: bold; transition: 0.3s; }
-        .label-default { background: #e8f0fe; color: #1967d2; }
+        .label-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 1.2em; font-weight: bold; transition: 0.3s; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+        .label-default { background: #e8f0fe; color: #1967d2; border: 2px dashed #1967d2; }
         .label-mentah { background: #fde8e8; color: #d32f2f; border: 2px solid #d32f2f; }
         .label-matang { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         
@@ -39,8 +39,8 @@
 
 <div class="card">
     <div id="form-container" class="fade-in">
-        <h2>🌴 Sortasi TBS </h2>
-        <p style="margin-bottom: 25px; color: #666;">Klik tombol di bawah untuk mulai memindai buah.</p>
+        <h2>🌴 Sortasi Sawit AI</h2>
+        <p style="margin-bottom: 25px; color: #666;">Arahkan kamera ke buah sawit untuk mendeteksi kematangan.</p>
         <button class="btn-masuk" id="btn-submit" onclick="masukDanMulai()">📸 BUKA KAMERA</button>
     </div>
 
@@ -118,21 +118,21 @@
 
         const lb = document.getElementById("label-container");
         
-        // --- LOGIKA BARU: AMBANG BATAS ---
-        // Jika probabilitas tertinggi di bawah 0.8 (80%), tampilkan "Cari Objek"
-        const THRESHOLD = 0.80; 
+        // AMBANG BATAS (THRESHOLD)
+        // Jika tingkat kepercayaan di bawah 85%, tampilkan "Cari Objek"
+        const THRESHOLD = 0.85;
 
         if (highestProb < THRESHOLD) {
             currentLabel = "Cari Objek";
             currentProb = highestProb;
-            lb.innerHTML = `🔍 Cari Objek...`;
-            lb.className = "label-box label-default"; // Kembali ke warna biru/netral
+            lb.innerHTML = "🔍 Cari Objek...";
+            lb.className = "label-box label-default";
         } else {
             currentLabel = bestLabel;
             currentProb = highestProb;
             lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(1)}%)`;
             
-            // Atur warna berdasarkan label
+            // Logika Warna
             if (bestLabel.toLowerCase().includes("mentah")) {
                 lb.className = "label-box label-mentah";
             } else if (bestLabel.toLowerCase().includes("matang")) {
@@ -141,12 +141,6 @@
                 lb.className = "label-box label-default";
             }
         }
-    }
-        currentLabel = bestLabel;
-        currentProb = highestProb;
-        const lb = document.getElementById("label-container");
-        lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(1)}%)`;
-        lb.className = "label-box " + (bestLabel.toLowerCase().includes("mentah") ? "label-mentah" : (bestLabel.toLowerCase().includes("matang") ? "label-matang" : "label-default"));
     }
 
     function captureImage() {
@@ -175,7 +169,7 @@
     function saveImage() {
         const link = document.createElement('a');
         const timeStamp = new Date().getTime();
-        link.download = `Hasil_Sortasi_${timeStamp}.png`;
+        link.download = `Sortasi_Sawit_${timeStamp}.png`;
         link.href = document.getElementById("preview-canvas").toDataURL();
         link.click();
     }
