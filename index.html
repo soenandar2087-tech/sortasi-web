@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Detektor Buah Cepat</title>
+    <title>AI Detektor Buah</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <style>
@@ -11,65 +11,92 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; min-height: 100vh; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
         
-        h2 { color: #1a73e8; margin-bottom: 20px; }
-        .btn-utama { width: 100%; padding: 18px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 1.2em; font-weight: bold; cursor: pointer; }
+        #form-container h2 { color: #1a73e8; margin-bottom: 30px; }
+        .btn-masuk { width: 100%; padding: 18px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-masuk:active { background: #1557b0; transform: scale(0.98); }
         
         #camera-container { display: none; }
-        #webcam-container { width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 3px solid #ddd; }
-        
-        .btn-capture-save { width: 100%; padding: 20px; background: #28a745; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.2em; margin-top: 10px; }
-        .btn-capture-save:active { background: #218838; transform: scale(0.95); }
+        .btn-logout { width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
 
-        .label-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 1.2em; font-weight: bold; }
+        #webcam-container { width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 3px solid #ddd; }
+        #preview-container { display: none; width: 300px; height: 300px; margin: 15px auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        canvas { width: 100% !important; }
+
+        .action-btn { width: 100%; padding: 14px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; }
+        .btn-capture { background: #28a745; color: white; display: none; }
+        .btn-save { background: #17a2b8; color: white; display: none; }
+
+        .label-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 1.2em; font-weight: bold; transition: 0.3s; }
         .label-default { background: #e8f0fe; color: #1967d2; }
         .label-mentah { background: #fde8e8; color: #d32f2f; border: 2px solid #d32f2f; }
         .label-matang { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
-
-        canvas#preview-canvas { display: none; } /* Sembunyikan canvas proses agar tidak berat */
+        
+        .fade-in { animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div id="form-container">
+    <div id="form-container" class="fade-in">
         <h2>🌴 Sortasi Sawit AI</h2>
-        <button class="btn-utama" id="btn-start" onclick="mulaiKamera()">📸 MASUK KE KAMERA</button>
+        <p style="margin-bottom: 25px; color: #666;">Klik tombol di bawah untuk mulai memindai buah.</p>
+        <button class="btn-masuk" id="btn-submit" onclick="masukDanMulai()">📸 BUKA KAMERA</button>
     </div>
 
-    <div id="camera-container">
-        <div id="webcam-container"></div>
+    <div id="camera-container" class="fade-in">
+        <button class="btn-logout" onclick="logout()">⬅️ Kembali</button>
+
+        <div id="webcam-container"><span style="color: white;">Mengaktifkan Kamera...</span></div>
         <div id="label-container" class="label-box label-default">Memuat AI...</div>
-        
-        <button class="btn-capture-save" id="btn-action" onclick="ambilDanSimpan()" disabled>📸 AMBIL & SIMPAN</button>
-        
-        <canvas id="preview-canvas" width="300" height="300"></canvas>
-        <p style="margin-top: 15px; font-size: 0.8em; color: #666;">Klik tombol hijau untuk simpan otomatis</p>
+
+        <div id="preview-container">
+            <canvas id="preview-canvas" width="300" height="300"></canvas>
+        </div>
+
+        <button class="action-btn btn-capture" id="capture-btn" onclick="captureImage()">📸 Ambil Gambar</button>
+        <button class="action-btn btn-save" id="save-btn" onclick="saveImage()">💾 Simpan Foto</button>
     </div>
 </div>
 
 <script>
     const MODEL_URL = "https://teachablemachine.withgoogle.com/models/ZkvJoTy22/";
-    let model, webcam, maxPredictions;
+    let model, webcam, maxPredictions, previewCtx;
     let currentLabel = "", currentProb = 0;
 
-    async function mulaiKamera() {
-        document.getElementById("btn-start").innerHTML = "⏳ Memuat...";
+    async function masukDanMulai() {
+        const btn = document.getElementById("btn-submit");
+        btn.disabled = true;
+        btn.innerHTML = "⏳ Memuat AI...";
+
         document.getElementById("form-container").style.display = "none";
         document.getElementById("camera-container").style.display = "block";
 
-        model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
-        maxPredictions = model.getTotalClasses();
-
-        webcam = new tmImage.Webcam(300, 300, false);
-        await webcam.setup({ facingMode: "environment" });
-        await webcam.play();
-
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-        document.getElementById("btn-action").disabled = false;
-        
-        window.requestAnimationFrame(loop);
+        await initAI();
     }
+
+    async function initAI() {
+        try {
+            model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
+            maxPredictions = model.getTotalClasses();
+
+            webcam = new tmImage.Webcam(300, 300, false); 
+            await webcam.setup({ facingMode: "environment" }); // Kamera belakang
+            await webcam.play();
+
+            document.getElementById("webcam-container").innerHTML = "";
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            document.getElementById("capture-btn").style.display = "block";
+            
+            previewCtx = document.getElementById("preview-canvas").getContext("2d");
+            window.requestAnimationFrame(loop);
+        } catch (e) {
+            alert("Gagal mengaktifkan kamera. Pastikan izin kamera diberikan.");
+            logout();
+        }
+    }
+
+    function logout() { location.reload(); }
 
     async function loop() {
         webcam.update();
@@ -90,33 +117,38 @@
         currentLabel = bestLabel;
         currentProb = highestProb;
         const lb = document.getElementById("label-container");
-        lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(0)}%)`;
+        lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(1)}%)`;
         lb.className = "label-box " + (bestLabel.toLowerCase().includes("mentah") ? "label-mentah" : (bestLabel.toLowerCase().includes("matang") ? "label-matang" : "label-default"));
     }
 
-    function ambilDanSimpan() {
-        const canvas = document.getElementById("preview-canvas");
-        const ctx = canvas.getContext("2d", { alpha: false });
+    function captureImage() {
+        previewCtx.drawImage(webcam.canvas, 0, 0, 300, 300);
+        
+        // Watermark Overlay
+        previewCtx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        previewCtx.fillRect(0, 240, 300, 60); 
 
-        // 1. Gambar dari webcam ke canvas internal
-        ctx.drawImage(webcam.canvas, 0, 0, 300, 300);
+        previewCtx.fillStyle = "white";
+        previewCtx.textAlign = "left";
+        const akurasi = (currentProb * 100).toFixed(1) + "%";
         
-        // 2. Tambah Watermark (Sangat Cepat)
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillRect(0, 250, 300, 50); 
-        ctx.fillStyle = "white";
-        ctx.font = "bold 15px Arial";
-        ctx.fillText(`${currentLabel.toUpperCase()} (${(currentProb * 100).toFixed(0)}%)`, 10, 272);
-        ctx.font = "11px Arial";
-        ctx.fillText(new Date().toLocaleString('id-ID'), 10, 288);
+        previewCtx.font = "bold 16px Arial";
+        previewCtx.fillText(`HASIL: ${currentLabel.toUpperCase()}`, 10, 265);
         
-        // 3. Konversi ke JPEG (Lebih ringan & cepat dibanding PNG)
-        const dataURL = canvas.toDataURL("image/jpeg", 0.8);
+        const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+        previewCtx.font = "12px Arial";
+        previewCtx.fillText(`Akurasi: ${akurasi} | ${tgl}`, 10, 285);
         
-        // 4. Trigger Download Langsung
+        document.getElementById("preview-container").style.display = "block";
+        document.getElementById("save-btn").style.display = "block";
+        document.getElementById("preview-container").scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function saveImage() {
         const link = document.createElement('a');
-        link.download = `SAWIT_${Date.now()}.jpg`;
-        link.href = dataURL;
+        const timeStamp = new Date().getTime();
+        link.download = `Hasil_Sortasi_${timeStamp}.png`;
+        link.href = document.getElementById("preview-canvas").toDataURL();
         link.click();
     }
 </script>
