@@ -11,22 +11,18 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; min-height: 100vh; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
         
-        #form-container h2 { color: #1a73e8; margin-bottom: 20px; }
-        .form-group { text-align: left; margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.95em; }
-        .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em; }
-        
-        .btn-masuk { width: 100%; padding: 14px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; }
+        #form-container h2 { color: #1a73e8; margin-bottom: 30px; }
+        .btn-masuk { width: 100%; padding: 18px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-masuk:active { background: #1557b0; transform: scale(0.98); }
         
         #camera-container { display: none; }
-        .user-info-bar { background: #e8f0fe; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; text-align: left; color: #1967d2; line-height: 1.4; border: 1px solid #c2d7fa; }
-        .btn-logout { width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
+        .btn-logout { width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
 
         #webcam-container { width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 3px solid #ddd; }
         #preview-container { display: none; width: 300px; height: 300px; margin: 15px auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         canvas { width: 100% !important; }
 
-        .action-btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .action-btn { width: 100%; padding: 14px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; }
         .btn-capture { background: #28a745; color: white; display: none; }
         .btn-save { background: #17a2b8; color: white; display: none; }
 
@@ -43,39 +39,15 @@
 
 <div class="card">
     <div id="form-container" class="fade-in">
-        <h2>🌴 Sortasi Sawit</h2>
-        <div class="form-group">
-            <label>👷 Mandor</label>
-            <select id="select-mandor">
-                <option value="">-- Pilih Mandor --</option>
-                <option value="Umang">Umang</option>
-                <option value="Jamsuna">Jamsuna</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>🧑‍🌾 Karyawan</label>
-            <select id="select-karyawan">
-                <option value="">-- Pilih Karyawan --</option>
-                <option value="Marsan">Marsan</option>
-                <option value="Suanda">Suanda</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>📍 Blok</label>
-            <select id="select-blok">
-                <option value="">-- Pilih Blok --</option>
-                <option value="Blok F10">Blok F10</option>
-                <option value="Blok F17">Blok F17</option>
-            </select>
-        </div>
-        <button class="btn-masuk" id="btn-submit" onclick="masukDanMulai()">🚀 MASUK KE KAMERA</button>
+        <h2>🌴 Sortasi Sawit AI</h2>
+        <p style="margin-bottom: 25px; color: #666;">Klik tombol di bawah untuk mulai memindai buah.</p>
+        <button class="btn-masuk" id="btn-submit" onclick="masukDanMulai()">📸 BUKA KAMERA</button>
     </div>
 
     <div id="camera-container" class="fade-in">
-        <div class="user-info-bar" id="user-info-bar"></div>
-        <button class="btn-logout" onclick="logout()">⬅️ Ganti Data</button>
+        <button class="btn-logout" onclick="logout()">⬅️ Kembali</button>
 
-        <div id="webcam-container"><span style="color: white;">Mengaktifkan Kamera Belakang...</span></div>
+        <div id="webcam-container"><span style="color: white;">Mengaktifkan Kamera...</span></div>
         <div id="label-container" class="label-box label-default">Memuat AI...</div>
 
         <div id="preview-container">
@@ -91,22 +63,12 @@
     const MODEL_URL = "https://teachablemachine.withgoogle.com/models/ZkvJoTy22/";
     let model, webcam, maxPredictions, previewCtx;
     let currentLabel = "", currentProb = 0;
-    let dataMandor = "", dataKaryawan = "", dataBlok = "";
 
     async function masukDanMulai() {
-        dataMandor = document.getElementById("select-mandor").value;
-        dataKaryawan = document.getElementById("select-karyawan").value;
-        dataBlok = document.getElementById("select-blok").value;
-
-        if(!dataMandor || !dataKaryawan || !dataBlok) {
-            return alert("Harap isi semua data!");
-        }
-
         const btn = document.getElementById("btn-submit");
         btn.disabled = true;
-        btn.innerHTML = "⏳ Tunggu...";
+        btn.innerHTML = "⏳ Memuat AI...";
 
-        document.getElementById("user-info-bar").innerHTML = `👷 <b>Mandor:</b> ${dataMandor}<br>🧑‍🌾 <b>Karyawan:</b> ${dataKaryawan}<br>📍 <b>Lokasi:</b> ${dataBlok}`;
         document.getElementById("form-container").style.display = "none";
         document.getElementById("camera-container").style.display = "block";
 
@@ -118,9 +80,8 @@
             model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
             maxPredictions = model.getTotalClasses();
 
-            // Set otomatis ke kamera belakang (environment) dan tanpa flip
             webcam = new tmImage.Webcam(300, 300, false); 
-            await webcam.setup({ facingMode: "environment" });
+            await webcam.setup({ facingMode: "environment" }); // Kamera belakang
             await webcam.play();
 
             document.getElementById("webcam-container").innerHTML = "";
@@ -130,7 +91,7 @@
             previewCtx = document.getElementById("preview-canvas").getContext("2d");
             window.requestAnimationFrame(loop);
         } catch (e) {
-            alert("Gagal mengaktifkan kamera belakang. Pastikan izin diberikan.");
+            alert("Gagal mengaktifkan kamera. Pastikan izin kamera diberikan.");
             logout();
         }
     }
@@ -162,20 +123,21 @@
 
     function captureImage() {
         previewCtx.drawImage(webcam.canvas, 0, 0, 300, 300);
-        previewCtx.fillStyle = "rgba(0, 0, 0, 0.75)";
-        previewCtx.fillRect(0, 215, 300, 85); 
+        
+        // Watermark Overlay
+        previewCtx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        previewCtx.fillRect(0, 240, 300, 60); 
 
         previewCtx.fillStyle = "white";
         previewCtx.textAlign = "left";
         const akurasi = (currentProb * 100).toFixed(1) + "%";
         
         previewCtx.font = "bold 16px Arial";
-        previewCtx.fillText(`Hasil: ${currentLabel.toUpperCase()} (${akurasi})`, 10, 235);
-        previewCtx.font = "12px Arial";
-        previewCtx.fillText("Mandor: " + dataMandor, 10, 255);
-        previewCtx.fillText("Karyawan: " + dataKaryawan, 10, 272);
+        previewCtx.fillText(`HASIL: ${currentLabel.toUpperCase()}`, 10, 265);
+        
         const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
-        previewCtx.fillText(`${dataBlok} | ${tgl}`, 10, 289);
+        previewCtx.font = "12px Arial";
+        previewCtx.fillText(`Akurasi: ${akurasi} | ${tgl}`, 10, 285);
         
         document.getElementById("preview-container").style.display = "block";
         document.getElementById("save-btn").style.display = "block";
@@ -184,7 +146,8 @@
 
     function saveImage() {
         const link = document.createElement('a');
-        link.download = `Sortasi_${dataBlok}_${dataKaryawan}_${(currentProb*100).toFixed(0)}%.png`;
+        const timeStamp = new Date().getTime();
+        link.download = `Hasil_Sortasi_${timeStamp}.png`;
         link.href = document.getElementById("preview-canvas").toDataURL();
         link.click();
     }
