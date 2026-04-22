@@ -2,174 +2,178 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Detektor Buah Sawit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sawit AI v3.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <style>
+        :root { --accent: #1a73e8; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; min-height: 100vh; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
         
-        #form-container h2 { color: #1a73e8; margin-bottom: 30px; }
-        .btn-masuk { width: 100%; padding: 18px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-masuk:active { background: #1557b0; transform: scale(0.98); }
+        body, html { 
+            height: 100%; width: 100%; background: #000; 
+            overflow: hidden; font-family: sans-serif;
+        }
+
+        .app-container {
+            height: 100dvh; display: flex; flex-direction: column;
+        }
+
+        /* Area Kamera - Sekarang Benar-benar Penuh ke bawah */
+        #video-wrapper { 
+            flex: 1; 
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
         
-        #camera-container { display: none; }
-        .btn-logout { width: 100%; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; font-weight: bold; }
+        #main-video { 
+            position: absolute;
+            width: 100%; height: 100%;
+            object-fit: cover; /* Menghilangkan area hitam */
+        }
 
-        #webcam-container { width: 300px; height: 300px; background: #2c3e50; margin: 10px auto; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 3px solid #ddd; }
-        #preview-container { display: none; width: 300px; height: 300px; margin: 15px auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        canvas { width: 100% !important; }
+        .bottom-panel {
+            padding: 20px 10px 30px 10px;
+            display: flex; flex-direction: column; align-items: center; 
+            gap: 15px; background: #000; z-index: 5;
+        }
 
-        .action-btn { width: 100%; padding: 14px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; }
-        .btn-capture { background: #28a745; color: white; display: none; }
-        .btn-save { background: #17a2b8; color: white; display: none; }
+        .label-status { 
+            width: 90%; max-width: 320px; padding: 12px; border-radius: 8px;
+            font-size: 14px; font-weight: bold; text-align: center;
+            background: #222; border: 1px solid #333; color: white;
+        }
+        .label-mentah { background: #641515; border-color: #f44336; }
+        .label-matang { background: #1b3d1d; border-color: #4caf50; }
 
-        .label-box { padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 1.2em; font-weight: bold; transition: 0.3s; min-height: 60px; display: flex; align-items: center; justify-content: center; }
-        .label-default { background: #e8f0fe; color: #1967d2; border: 2px dashed #1967d2; }
-        .label-mentah { background: #fde8e8; color: #d32f2f; border: 2px solid #d32f2f; }
-        .label-matang { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
-        
-        .fade-in { animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-capture { 
+            width: 70px; height: 70px; background: white; border: 5px solid #333;
+            border-radius: 50%; outline: none;
+        }
+
+        #preview-overlay {
+            display: none; position: fixed; inset: 0; background: #000; z-index: 100;
+            flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+        }
+        #preview-canvas { width: 100%; max-width: 350px; border-radius: 8px; }
+        .preview-btns { margin-top: 20px; display: flex; gap: 10px; width: 100%; }
+        .btn-p { flex: 1; padding: 15px; border-radius: 8px; border: none; font-weight: bold; color: white; }
+
+        #welcome {
+            position: fixed; inset: 0; background: white; z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div id="form-container" class="fade-in">
-        <h2>🌴 Sortasi Sawit AI</h2>
-        <p style="margin-bottom: 25px; color: #666;">Arahkan kamera ke buah sawit untuk mendeteksi kematangan.</p>
-        <button class="btn-masuk" id="btn-submit" onclick="masukDanMulai()">📸 BUKA KAMERA</button>
+<div id="welcome">
+    <button onclick="init()" style="padding:15px 40px; background:var(--accent); color:white; border:none; border-radius:30px; font-weight:bold;">MULAI SCANNER</button>
+</div>
+
+<div class="app-container">
+    <div id="video-wrapper">
+        <video id="main-video" autoplay playsinline muted></video>
     </div>
 
-    <div id="camera-container" class="fade-in">
-        <button class="btn-logout" onclick="logout()">⬅️ Kembali</button>
+    <div class="bottom-panel">
+        <div id="label-container" class="label-status">Menghubungkan...</div>
+        <button class="btn-capture" onclick="takePhoto()"></button>
+    </div>
+</div>
 
-        <div id="webcam-container"><span style="color: white;">Mengaktifkan Kamera...</span></div>
-        <div id="label-container" class="label-box label-default">Memuat AI...</div>
-
-        <div id="preview-container">
-            <canvas id="preview-canvas" width="300" height="300"></canvas>
-        </div>
-
-        <button class="action-btn btn-capture" id="capture-btn" onclick="captureImage()">📸 Ambil Gambar</button>
-        <button class="action-btn btn-save" id="save-btn" onclick="saveImage()">💾 Simpan Foto</button>
+<div id="preview-overlay">
+    <canvas id="preview-canvas"></canvas>
+    <div class="preview-btns">
+        <button class="btn-p" onclick="reset()" style="background:#333;">ULANGI</button>
+        <button class="btn-p" onclick="save()" style="background:var(--accent);">SIMPAN</button>
     </div>
 </div>
 
 <script>
     const MODEL_URL = "https://teachablemachine.withgoogle.com/models/ZkvJoTy22/";
-    let model, webcam, maxPredictions, previewCtx;
-    let currentLabel = "", currentProb = 0;
+    let model, video, labelContainer, isActive = true;
 
-    async function masukDanMulai() {
-        const btn = document.getElementById("btn-submit");
-        btn.disabled = true;
-        btn.innerHTML = "⏳ Memuat AI...";
+    async function init() {
+        document.getElementById('welcome').style.display = 'none';
+        video = document.getElementById('main-video');
+        labelContainer = document.getElementById('label-container');
 
-        document.getElementById("form-container").style.display = "none";
-        document.getElementById("camera-container").style.display = "block";
-
-        await initAI();
-    }
-
-    async function initAI() {
         try {
             model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
-            maxPredictions = model.getTotalClasses();
-
-            webcam = new tmImage.Webcam(300, 300, false); 
-            await webcam.setup({ facingMode: "environment" }); // Kamera belakang
-            await webcam.play();
-
-            document.getElementById("webcam-container").innerHTML = "";
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
-            document.getElementById("capture-btn").style.display = "block";
             
-            previewCtx = document.getElementById("preview-canvas").getContext("2d");
-            window.requestAnimationFrame(loop);
-        } catch (e) {
-            alert("Gagal mengaktifkan kamera. Pastikan izin kamera diberikan.");
-            logout();
-        }
+            // Mengambil akses kamera HP secara manual (Lebih stabil)
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" }, 
+                audio: false 
+            });
+            video.srcObject = stream;
+            
+            predictLoop();
+        } catch (e) { alert("Error: " + e); }
     }
 
-    function logout() { location.reload(); }
+    async function predictLoop() {
+        if (isActive) {
+            // Lakukan deteksi
+            const prediction = await model.predict(video);
+            prediction.sort((a, b) => b.probability - a.probability);
+            const res = prediction[0];
 
-    async function loop() {
-        webcam.update();
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
-
-    async function predict() {
-        const prediction = await model.predict(webcam.canvas);
-        let bestLabel = "";
-        let highestProb = 0;
-
-        for (let i = 0; i < maxPredictions; i++) {
-            if (prediction[i].probability > highestProb) {
-                highestProb = prediction[i].probability;
-                bestLabel = prediction[i].className;
-            }
-        }
-
-        const lb = document.getElementById("label-container");
-        
-        // AMBANG BATAS (THRESHOLD)
-        // Jika tingkat kepercayaan di bawah 85%, tampilkan "Cari Objek"
-        const THRESHOLD = 0.85;
-
-        if (highestProb < THRESHOLD) {
-            currentLabel = "Cari Objek";
-            currentProb = highestProb;
-            lb.innerHTML = "🔍 Cari Objek...";
-            lb.className = "label-box label-default";
-        } else {
-            currentLabel = bestLabel;
-            currentProb = highestProb;
-            lb.innerHTML = `${bestLabel} (${(highestProb * 100).toFixed(1)}%)`;
-            
-            // Logika Warna
-            if (bestLabel.toLowerCase().includes("mentah")) {
-                lb.className = "label-box label-mentah";
-            } else if (bestLabel.toLowerCase().includes("matang")) {
-                lb.className = "label-box label-matang";
+            if (res.probability > 0.75) {
+                labelContainer.innerHTML = `${res.className.toUpperCase()} (${(res.probability * 100).toFixed(0)}%)`;
+                if (res.className.toLowerCase().includes("mentah")) labelContainer.className = "label-status label-mentah";
+                else labelContainer.className = "label-status label-matang";
             } else {
-                lb.className = "label-box label-default";
+                labelContainer.innerHTML = "🔍 MENCARI OBJEK...";
+                labelContainer.className = "label-status";
             }
+
+            // PERUBAHAN UTAMA DI SINI:
+            // Kita beri jeda 250ms (0.25 detik) sebelum deteksi berikutnya.
+            // Ini membuat HP jauh lebih dingin dan aplikasi lebih stabil.
+            setTimeout(() => {
+                requestAnimationFrame(predictLoop);
+            }, 250); 
         }
     }
 
-    function captureImage() {
-        previewCtx.drawImage(webcam.canvas, 0, 0, 300, 300);
-        
-        // Watermark Overlay
-        previewCtx.fillStyle = "rgba(0, 0, 0, 0.6)";
-        previewCtx.fillRect(0, 240, 300, 60); 
+    function takePhoto() {
+        isActive = false;
+        const canvas = document.getElementById("preview-canvas");
+        const ctx = canvas.getContext("2d");
 
-        previewCtx.fillStyle = "white";
-        previewCtx.textAlign = "left";
-        const akurasi = (currentProb * 100).toFixed(1) + "%";
+        // Set ukuran canvas sesuai tampilan video di layar
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+
+        // Watermark Tanggal & Waktu
+        const now = new Date();
+        const info = `${now.toLocaleDateString('id-ID')} | ${now.toLocaleTimeString('id-ID')}`;
         
-        previewCtx.font = "bold 16px Arial";
-        previewCtx.fillText(`HASIL: ${currentLabel.toUpperCase()}`, 10, 265);
-        
-        const tgl = new Date().toLocaleString('id-ID', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
-        previewCtx.font = "12px Arial";
-        previewCtx.fillText(`Akurasi: ${akurasi} | ${tgl}`, 10, 285);
-        
-        document.getElementById("preview-container").style.display = "block";
-        document.getElementById("save-btn").style.display = "block";
-        document.getElementById("preview-container").scrollIntoView({ behavior: 'smooth' });
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText(labelContainer.innerText, canvas.width/2, canvas.height - 35);
+        ctx.font = "14px sans-serif";
+        ctx.fillText(info, canvas.width/2, canvas.height - 15);
+
+        document.getElementById("preview-overlay").style.display = "flex";
     }
 
-    function saveImage() {
+    function reset() {
+        document.getElementById("preview-overlay").style.display = "none";
+        isActive = true;
+        predictLoop();
+    }
+
+    function save() {
         const link = document.createElement('a');
-        const timeStamp = new Date().getTime();
-        link.download = `Sortasi_Sawit_${timeStamp}.png`;
+        link.download = `Sawit_${Date.now()}.png`;
         link.href = document.getElementById("preview-canvas").toDataURL();
         link.click();
     }
